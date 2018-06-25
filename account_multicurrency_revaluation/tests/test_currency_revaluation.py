@@ -13,15 +13,14 @@ class TestCurrencyRevaluation(SavepointCase):
         super().setUpClass()
         ref = cls.env.ref
 
-        company = cls.env['res.company'].create({
-            'name': 'new_company'
-        })
+        cls.company = ref(
+            'account_multicurrency_revaluation.res_company_reval')
 
         # Set currency EUR on company
         values = {
             'currency_id': ref('base.EUR').id,
         }
-        company.write(values)
+        cls.company.write(values)
 
         cls.reval_journal = ref(
             'account_multicurrency_revaluation.reval_journal')
@@ -136,8 +135,6 @@ class TestCurrencyRevaluation(SavepointCase):
 
     def test_uk_revaluation(self):
         # Set accounts on company
-        company = self.env['res.company'].search([])
-
         values = {
             'revaluation_loss_account_id':
                 self.env.ref('account_multicurrency_revaluation.'
@@ -147,7 +144,7 @@ class TestCurrencyRevaluation(SavepointCase):
                              'acc_reval_gain').id,
             'default_currency_reval_journal_id': self.reval_journal.id,
         }
-        company.write(values)
+        self.company.write(values)
 
         wizard = self.env['wizard.currency.revaluation']
         data = {
