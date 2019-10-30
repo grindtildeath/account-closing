@@ -32,6 +32,7 @@
                     <group name="top">
                         <group name="general-params">
                             <field name="cutoff_date"/>
+                            <field name="partner_split"/>
                             <field name="total_cutoff_amount"/>
                             <field name="company_id" groups="base.group_multi_company" widget="selection" />
                             <field name="company_currency_id" invisible="1"/>

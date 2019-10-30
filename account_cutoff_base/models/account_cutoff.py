@@ -54,6 +54,13 @@ class AccountCutoff(models.Model):
         states={'draft': [('readonly', False)]}, copy=False,
         track_visibility='onchange'
     )
+
+    partner_split = fields.Boolean(
+        string='Split by Partner', readonly=True,
+        states={'draft': [('readonly', False)]}, copy=False,
+        track_visibility='onchange'
+    )
+
     cutoff_type = fields.Selection(
         selection='_selection_cutoff_type',
         string='Type',
@@ -152,7 +159,10 @@ class AccountCutoff(models.Model):
         same values for these fields will be merged.
         The list must at least contain account_id.
         """
-        return ['account_id', 'analytic_account_id']
+        merge_keys = ['account_id', 'analytic_account_id']
+        if self.partner_split:
+            merge_keys.append('partner_id')
+        return merge_keys
 
     @api.multi
     def _prepare_move(self, to_provision):
@@ -200,11 +210,14 @@ class AccountCutoff(models.Model):
         If you override this, the added fields must also be
         added in an override of _get_merge_keys.
         """
-        return {
+        provision_line = {
             'account_id': cutoff_line.cutoff_account_id.id,
             'analytic_account_id': cutoff_line.analytic_account_id.id,
             'amount': cutoff_line.cutoff_amount,
         }
+        if self.partner_split:
+            provision_line.update({'partner_id': cutoff_line.partner_id.id})
+        return provision_line
 
     @api.multi
     def _prepare_provision_tax_line(self, cutoff_tax_line):
