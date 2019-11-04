@@ -54,7 +54,11 @@ class AccountCutoff(models.Model):
         states={'draft': [('readonly', False)]}, copy=False,
         track_visibility='onchange'
     )
-
+    analytic_tag_split = fields.Boolean(
+        string='Split by analytic tags', readonly=True,
+        states={'draft': [('readonly', False)]}, copy=False,
+        track_visibility='onchange'
+    )
     partner_split = fields.Boolean(
         string='Split by Partner', readonly=True,
         states={'draft': [('readonly', False)]}, copy=False,
@@ -158,7 +162,9 @@ class AccountCutoff(models.Model):
         same values for these fields will be merged.
         The list must at least contain account_id.
         """
-        merge_keys = ['account_id', 'analytic_account_id', 'analytic_tag_ids']
+        merge_keys = ['account_id', 'analytic_account_id']
+        if self.analytic_tag_split:
+            merge_keys.append('analytic_tag_ids')
         if self.partner_split:
             merge_keys.append('partner_id')
         return merge_keys
@@ -236,9 +242,17 @@ class AccountCutoff(models.Model):
         provision_line = {
             'account_id': cutoff_line.cutoff_account_id.id,
             'analytic_account_id': cutoff_line.analytic_account_id.id,
-            'analytic_tag_ids': [(6, 0, cutoff_line.analytic_tag_ids.ids)],
+
             'amount': cutoff_line.cutoff_amount,
         }
+        if self.analytic_tag_split:
+            provision_line.update(
+                {
+                    'analytic_tag_ids': [
+                        (6, 0, cutoff_line.analytic_tag_ids.ids)
+                    ]
+                }
+            )
         if self.partner_split:
             provision_line.update({'partner_id': cutoff_line.partner_id.id})
         return provision_line
